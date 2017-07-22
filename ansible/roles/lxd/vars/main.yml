@@ -1,0 +1,17 @@
+---
+
+lxd_packages:
+  - lxd
+  - lxd-client
+  - zfsutils-linux
+
+lxd_service_name: lxd
+
+lxd_zfs_pool_name: zpool
+
+lxd_ipv4_address: 10.0.82.1
+
+lxd_default_network_name: lxdbr0
+
+lxd_os_version: "ubuntu:16.04"
+lxd_os_alias: "Ubuntu-LTS-16.04"

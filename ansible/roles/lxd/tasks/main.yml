@@ -1,0 +1,96 @@
+---
+
+- name: Add LXD repository to sources
+  become: yes
+  apt_repository:
+    repo: 'ppa:ubuntu-lxc/lxd-stable'
+
+- name: Install lxd packages
+  become: yes
+  apt: 
+    name: "{{ item }}" 
+    state: present
+    update_cache: yes
+  with_items: 
+    - "{{ lxd_packages }}"
+
+- name: Ensure LXD service is started and enabled on boot
+  become: yes
+  service:
+    name: "{{ lxd_service_name }}"
+    state: started
+    enabled: yes
+
+- name: Add user to lxd group
+  shell: newgrp lxd
+
+- name: verify if ZFS pool exists
+  become: yes
+  shell: zpool list {{ lxd_zfs_pool_name }}
+  register: zfspool
+  ignore_errors: true
+
+- name: print zfspool
+  debug: var=zfspool
+
+- name: create zfs file for lxd of 20GB
+  become: yes
+  command: "truncate -s 20G /usr/lib/lxd/zfs.img"
+  when: zfspool.rc != 0
+
+- name: create new zpool for lxd
+  become: yes
+  command: "zpool create {{ lxd_zfs_pool_name }} /usr/lib/lxd/zfs.img"
+  when: zfspool.rc != 0
+
+- name: verify if lxd is configured to use ZFS
+  become: yes
+  shell: lxc info | grep storage | grep zfs
+  register: lxcinfo
+  ignore_errors: true
+
+- name: configure lxd to use zfs
+  become: yes
+  command: "lxd init --storage-backend zfs --storage-pool {{ lxd_zfs_pool_name }} --auto"
+
+- name: List existing lxc images
+  command: "lxc image list"
+  changed_when: false
+  register: imagelist
+
+- name: Download {{ lxd_os_alias }} image for LXD containers
+  command: "lxc image copy {{ lxd_os_version }} local: --alias={{ lxd_os_alias }}"
+  when: imagelist.stdout.find(lxd_os_alias) == -1
+
+- name: Create containers
+  lxd_container:
+    name: "{{ item }}"
+    state: stopped
+    source:
+      type: image
+      protocol: lxd
+      alias: "{{ lxd_os_alias }}"
+  with_items: "{{ groups.int_containers }}"
+
+- name: List existing lxc netwoks
+  command: "lxc network list"
+  changed_when: false
+  register: networkList
+
+- name: Create LXD network {{ lxd_default_network_name }} if needed
+  command: "lxc network create {{ lxd_default_network_name }} ipv6.address=none ipv4.address={{ lxd_ipv4_address }} ipv4.nat=true"
+  when: networkList.stdout.find(lxd_default_network_name) == -1
+
+- name: Add containers to {{ lxd_default_network_name }} network
+  command: "lxc network attach {{ lxd_default_network_name }} {{ item }} eth0"
+  register: output
+  failed_when: "output.stderr and 'Device already exists: eth0' not in output.stderr"
+  with_items: "{{ groups.int_containers }}"
+
+- name: Set static IP in LXD containers
+  command: "lxc config device set {{ item }} eth0 ipv4.address {{ hostvars[item].container_ip }}"
+  with_items: "{{ groups.int_containers }}"
+
+- name: Run all containers
+  command: "lxc start {{ item }} "
+  with_items: "{{ groups.int_containers }}"

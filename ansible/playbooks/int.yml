@@ -1,0 +1,8 @@
+---
+- hosts: int
+  remote_user: vagrant
+  tasks:
+    - name: echo hola mundo
+      shell: echo "HEllo World"
+  roles:
+    - python_minimal
