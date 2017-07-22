@@ -5,7 +5,7 @@
 192.168.33.20 ansible_ssh_user=vagrant ansible_ssh_pass=vagrant ansible_become_pass=vagrant
 
 [int_containers]
-jenkins ansible_connection=lxd container_ip=10.0.82.2
-nexus ansible_connection=lxd container_ip=10.0.82.3
-sonarqube ansible_connection=lxd container_ip=10.0.82.4
-taiga ansible_connection=lxd container_ip=10.0.82.5
+jenkins ansible_connection=lxd container_ip=10.0.82.2 user_sudo_ssh=ansible passwd_sudo_ssh=ansible
+nexus ansible_connection=lxd container_ip=10.0.82.3 user_sudo_ssh=ansible passwd_sudo_ssh=ansible
+sonarqube ansible_connection=lxd container_ip=10.0.82.4 user_sudo_ssh=ansible passwd_sudo_ssh=ansible
+taiga ansible_connection=lxd container_ip=10.0.82.5 user_sudo_ssh=ansible passwd_sudo_ssh=ansible

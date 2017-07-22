@@ -94,3 +94,29 @@
 - name: Run all containers
   command: "lxc start {{ item }} "
   with_items: "{{ groups.int_containers }}"
+
+- name: Create user in LXD containers for Ansible SSH
+  command: "lxc exec {{ item }} -- useradd -m {{ hostvars[item].user_sudo_ssh }}"
+  register: output
+  failed_when: "output.stderr and 'already exists' not in output.stderr"
+  with_items: "{{ groups.int_containers }}"
+
+- name: Set user password in LXD containers for Ansible SSH
+  command: "lxc exec {{ item }} -- sh -c 'echo \"{{ hostvars[item].user_sudo_ssh }}:{{ hostvars[item].passwd_sudo_ssh }}\" | chpasswd'"
+  with_items: "{{ groups.int_containers }}"
+
+- name: Set user groups in LXD containers for Ansible SSH
+  command: "lxc exec {{ item }} -- usermod -a -G lxd,sudo {{ hostvars[item].user_sudo_ssh }}"
+  with_items: "{{ groups.int_containers }}"
+
+- name: Set user shell in LXD containers for Ansible SSH
+  command: "lxc exec {{ item }} -- usermod -s /bin/bash {{ hostvars[item].user_sudo_ssh }}"
+  with_items: "{{ groups.int_containers }}"
+
+- name: Allow PasswordAuthentication in LXD containers for Ansible SSH
+  command: "lxc exec {{ item }} -- sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config"
+  with_items: "{{ groups.int_containers }}"
+
+- name: Restart SSH service in LXD containers for Ansible SSH
+  command: "lxc exec {{ item }} -- service ssh restart"
+  with_items: "{{ groups.int_containers }}"
