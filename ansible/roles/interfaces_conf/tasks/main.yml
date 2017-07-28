@@ -1,0 +1,7 @@
+---
+
+- name: Ensure interface are configured
+  become: yes
+  template: src=interface_entry.j2 dest=/etc/network/interfaces.d/if-{{item.name}}
+  with_items: "{{ network_interfaces }}"
+  notify: Restart networking

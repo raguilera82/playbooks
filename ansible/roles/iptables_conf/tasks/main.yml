@@ -1,0 +1,28 @@
+---
+
+- name: Install iptables-persistent
+  become: yes
+  apt: 
+    name: iptables-persistent
+    state: present
+
+- name: Setup SSH rules for containers
+  become: yes
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth1
+    protocol: tcp
+    destination: "{{ groups.int[0] }}"
+    destination_port: "{{ hostvars[item].ansible_ssh_port }}"
+    jump: DNAT
+    to_destination: "{{ hostvars[item].container_ip }}:22"
+  with_items: "{{ groups.int_containers }}"
+
+- name: Save Iptables Changes
+  become: yes
+  command: "netfilter-persistent save"
+
+- name: Reload Iptables Changes
+  become: yes
+  command: "netfilter-persistent reload"

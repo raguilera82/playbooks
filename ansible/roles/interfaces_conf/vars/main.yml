@@ -1,0 +1,9 @@
+---
+network_interfaces:
+- name: "lxdbr0"
+  type: "static"
+  bridge_ports: "none"
+  bridge_stp: "off"
+  bridge_fd: "0"
+  address: "10.0.82.1"
+  netmask: "255.255.255.0"

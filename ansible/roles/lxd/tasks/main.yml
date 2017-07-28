@@ -58,28 +58,12 @@
   changed_when: false
   register: imagelist
 
-- name: Download {{ lxd_os_alias }} image for LXD containers
-  command: "lxc image copy {{ lxd_os_version }} local: --alias={{ lxd_os_alias }}"
-  when: imagelist.stdout.find(lxd_os_alias) == -1
-
 - name: Create containers
-  lxd_container:
-    name: "{{ item }}"
-    state: stopped
-    source:
-      type: image
-      protocol: lxd
-      alias: "{{ lxd_os_alias }}"
+  command: lxc init ubuntu:16.04 {{ item }}
   with_items: "{{ groups.int_containers }}"
 
-- name: List existing lxc netwoks
-  command: "lxc network list"
-  changed_when: false
-  register: networkList
-
 - name: Create LXD network {{ lxd_default_network_name }} if needed
-  command: "lxc network create {{ lxd_default_network_name }} ipv6.address=none ipv4.address={{ lxd_ipv4_address }} ipv4.nat=true"
-  when: networkList.stdout.find(lxd_default_network_name) == -1
+  command: "lxc network create {{ lxd_default_network_name }} ipv6.address=none ipv4.address={{ lxd_ipv4_address }}/24 ipv4.nat=true"
 
 - name: Add containers to {{ lxd_default_network_name }} network
   command: "lxc network attach {{ lxd_default_network_name }} {{ item }} eth0"
@@ -95,22 +79,23 @@
   command: "lxc start {{ item }} "
   with_items: "{{ groups.int_containers }}"
 
+
 - name: Create user in LXD containers for Ansible SSH
-  command: "lxc exec {{ item }} -- useradd -m {{ hostvars[item].user_sudo_ssh }}"
+  command: "lxc exec {{ item }} -- useradd -m {{ hostvars[item].ansible_user }}"
   register: output
   failed_when: "output.stderr and 'already exists' not in output.stderr"
   with_items: "{{ groups.int_containers }}"
 
 - name: Set user password in LXD containers for Ansible SSH
-  command: "lxc exec {{ item }} -- sh -c 'echo \"{{ hostvars[item].user_sudo_ssh }}:{{ hostvars[item].passwd_sudo_ssh }}\" | chpasswd'"
+  command: "lxc exec {{ item }} -- sh -c 'echo \"{{ hostvars[item].ansible_user }}:{{ hostvars[item].ansible_become_pass }}\" | chpasswd'"
   with_items: "{{ groups.int_containers }}"
 
 - name: Set user groups in LXD containers for Ansible SSH
-  command: "lxc exec {{ item }} -- usermod -a -G lxd,sudo {{ hostvars[item].user_sudo_ssh }}"
+  command: "lxc exec {{ item }} -- usermod -a -G lxd,sudo {{ hostvars[item].ansible_user }}"
   with_items: "{{ groups.int_containers }}"
 
 - name: Set user shell in LXD containers for Ansible SSH
-  command: "lxc exec {{ item }} -- usermod -s /bin/bash {{ hostvars[item].user_sudo_ssh }}"
+  command: "lxc exec {{ item }} -- usermod -s /bin/bash {{ hostvars[item].ansible_user }}"
   with_items: "{{ groups.int_containers }}"
 
 - name: Allow PasswordAuthentication in LXD containers for Ansible SSH
@@ -119,4 +104,8 @@
 
 - name: Restart SSH service in LXD containers for Ansible SSH
   command: "lxc exec {{ item }} -- service ssh restart"
+  with_items: "{{ groups.int_containers }}"
+
+- name: Make initial snapshot
+  command: "lxc snapshot {{ item }} initial"
   with_items: "{{ groups.int_containers }}"

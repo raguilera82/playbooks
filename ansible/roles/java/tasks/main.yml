@@ -1,0 +1,6 @@
+---
+
+- name: Install java
+  shell: source {{ sdkman_folder }}/bin/sdkman-init.sh && sdk install java
+  args:
+    executable: /bin/bash

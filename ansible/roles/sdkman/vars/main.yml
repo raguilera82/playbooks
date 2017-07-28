@@ -1,0 +1,5 @@
+---
+
+sdkman_script_install_url: http://get.sdkman.io
+sdkman_folder: '/home/ansible/.sdkman'
+user_home_path: /home/ansible

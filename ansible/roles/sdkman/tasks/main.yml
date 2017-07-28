@@ -1,0 +1,17 @@
+---
+
+- name: Install unzip
+  become: yes
+  apt:
+    name: 
+      - unzip
+      - zip
+    state: present
+
+- name: Check if sdkman is installed
+  shell: test -d {{ sdkman_folder }} && echo "yes" || echo "no"
+  register: is_sdkman_installed
+
+- name: Install SDKMAN!
+  when: is_sdkman_installed.stdout == "no"
+  shell: curl -s {{ sdkman_script_install_url }} | bash executable=/bin/bash

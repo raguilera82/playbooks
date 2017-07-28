@@ -2,9 +2,8 @@
 - hosts: int
   remote_user: vagrant
   gather_facts: false
-  tasks:
-    - name: echo hola mundo
-      shell: echo "HEllo World"
   roles:
     - python_minimal
     - lxd
+    #- interfaces_conf
+    - iptables_conf
