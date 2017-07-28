@@ -19,10 +19,11 @@
     to_destination: "{{ hostvars[item].container_ip }}:22"
   with_items: "{{ groups.int_containers }}"
 
-- name: Save Iptables Changes
+- name: Setup NAT services
   become: yes
-  command: "netfilter-persistent save"
+  command: iptables -t nat -A PREROUTING -i eth1 -p tcp -m multiport --dports {{ hostvars[item].service_port }} -j DNAT --to-destination "{{ hostvars[item].container_ip }}:{{ hostvars[item].service_port }}"
+  with_items: "{{ groups.int_containers }}"
 
-- name: Reload Iptables Changes
-  become: yes
-  command: "netfilter-persistent reload"
+- name: Refresh iptables
+  include_role:
+    name: iptables-persistent

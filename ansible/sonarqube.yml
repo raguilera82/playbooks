@@ -1,0 +1,14 @@
+- hosts: sonarqube
+  gather_facts: false
+  become: yes
+  vars:
+    - ansible_distribution: Ubuntu
+    - ansible_distribution_version: 16.04
+    - ansible_os_family: Debian
+    - ansible_service_mgr: systemd
+    - sonar_version: '6.3'
+  roles:
+   - python_minimal
+   - kbrebanov.unzip
+   - geerlingguy.sonar
+     

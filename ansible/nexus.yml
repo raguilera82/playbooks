@@ -1,0 +1,67 @@
+---
+
+- hosts: nexus
+  gather_facts: false
+  become: yes
+  vars:
+    - ansible_distribution: Ubuntu
+    - ansible_distribution_version: 16.04
+    - ansible_os_family: Debian
+    - nexus_version: '3.4.0-02'
+    - nexus_timezone: 'Europe/Madrid'
+    - nexus_package: "nexus-{{ nexus_version }}-unix.tar.gz"
+    - nexus_default_port: 8081
+    - nexus_admin_password: 'admin123'
+  roles:
+    - python_minimal
+    - ansiblebit.oracle-java
+    - raguilera82.nexus3-oss
+  tasks:
+    - name: Publish service PREROUTING
+      become: yes
+      iptables:
+        table: nat
+        chain: PREROUTING
+        in_interface: eth0
+        protocol: tcp
+        destination_port: "{{ nexus_default_port }}"
+        jump: DNAT
+        to_destination: "{{ hostvars[inventory_hostname].container_ip }}:{{ nexus_default_port }}"
+
+    - name: Publish service OUTPUT container
+      become: yes
+      iptables:
+        table: nat
+        chain: OUTPUT
+        out_interface: lo
+        protocol: tcp
+        destination_port: "{{ nexus_default_port }}"
+        jump: DNAT
+        to_destination: "{{ hostvars[inventory_hostname].container_ip }}:{{ nexus_default_port }}"
+
+    - name: Refresh iptables
+      include_role:
+        name: iptables-persistent
+
+- hosts: int
+  gather_facts: false
+  become: yes
+  vars:
+  - lxd_ipv4_address: "10.0.82.1/24"
+  - nexus_default_port: 8081
+  tasks:
+  - name: Publish service OUTPUT host
+    iptables:
+      table: nat
+      chain: POSTROUTING
+      out_interface: lxdbr0
+      source: "{{ lxd_ipv4_address }}"
+      protocol: tcp
+      destination_port: "{{ nexus_default_port }}"
+      jump: SNAT
+      to_source: "{{ groups.int[0] }}"
+  
+  - name: Refresh iptables
+    include_role:
+      name: iptables-persistent
+

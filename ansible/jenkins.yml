@@ -9,47 +9,56 @@
     - jenkins_version: 2.71
     - jenkins_admin_password_file: /var/lib/jenkins/secrets/initialAdminPassword
     - jenkins_http_port: 8080
-    - lxd_ipv4_address: 10.0.82.1
+    #- lxd_ipv4_address: 10.0.82.1
   roles:
     - python_minimal
     - geerlingguy.jenkins
-  tasks:
-    - name: Publish Jenkins service PREROUTING
-      become: yes
-      iptables:
-        table: nat
-        chain: PREROUTING
-        in_interface: eth0
-        protocol: tcp
-        destination_port: "{{ jenkins_http_port }}"
-        jump: DNAT
-        to_destination: "{{ hostvars[inventory_hostname].container_ip }}:{{ jenkins_http_port }}"
+  # tasks:
+  #   - name: Publish Jenkins service PREROUTING
+  #     become: yes
+  #     iptables:
+  #       table: nat
+  #       chain: PREROUTING
+  #       in_interface: eth0
+  #       protocol: tcp
+  #       destination_port: "{{ jenkins_http_port }}"
+  #       jump: DNAT
+  #       to_destination: "{{ hostvars[inventory_hostname].container_ip }}:{{ jenkins_http_port }}"
 
-    - name: Publish Jenkins service OUTPUT container
-      become: yes
-      iptables:
-        table: nat
-        chain: OUTPUT
-        out_interface: lo
-        protocol: tcp
-        destination_port: "{{ jenkins_http_port }}"
-        jump: DNAT
-        to_destination: "{{ hostvars[inventory_hostname].container_ip }}:{{ jenkins_http_port }}"
+  #   - name: Publish Jenkins service OUTPUT container
+  #     become: yes
+  #     iptables:
+  #       table: nat
+  #       chain: OUTPUT
+  #       out_interface: lo
+  #       protocol: tcp
+  #       destination_port: "{{ jenkins_http_port }}"
+  #       jump: DNAT
+  #       to_destination: "{{ hostvars[inventory_hostname].container_ip }}:{{ jenkins_http_port }}"
 
-    - name: Publish Jenkins service OUTPUT host
-      become: yes
-      iptables:
-        table: nat
-        chain: POSTROUTING
-        out_interface: lxdbr0
-        source: "{{ lxd_ipv4_address }}/24"
-        protocol: tcp
-        destination_port: "{{ jenkins_http_port }}"
-        jump: SNAT
-        to_source: "{{ groups.int[0] }}"
+  #   - name: Refresh iptables
+  #     include_role:
+  #       name: iptables-persistent
 
-    - name: install_iptables_persistent
-      environment:
-        DEBIAN_FRONTEND: noninteractive
-      apt: pkg=iptables-persistent state=present
-      tags: install_iptables_persistent
+# - hosts: int
+#   gather_facts: false
+#   become: yes
+#   vars:
+#     lxd_ipv4_address: 10.0.82.1
+#     jenkins_http_port: 8080
+#   tasks:
+#     - name: Publish Jenkins service OUTPUT host
+#       become: yes
+#       iptables:
+#         table: nat
+#         chain: POSTROUTING
+#         out_interface: lxdbr0
+#         source: "{{ lxd_ipv4_address }}/24"
+#         protocol: tcp
+#         destination_port: "{{ jenkins_http_port }}"
+#         jump: SNAT
+#         to_source: "{{ groups.int[0] }}"
+
+#     - name: Refresh iptables
+#       include_role:
+#         name: iptables-persistent

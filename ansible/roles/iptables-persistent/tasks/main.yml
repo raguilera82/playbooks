@@ -1,0 +1,15 @@
+---
+
+- name: Install iptables-persistent
+  become: yes
+  apt: 
+    name: iptables-persistent
+    state: present
+
+- name: Save Iptables Changes
+  become: yes
+  shell: service netfilter-persistent save
+
+- name: Reload Iptables Changes
+  become: yes
+  shell: service netfilter-persistent reload
