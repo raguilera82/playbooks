@@ -3,11 +3,6 @@
   remote_user: vagrant
   gather_facts: false
   become: yes
-  vars:
-    jenkins_http_port: 8080
-    nexus_http_port: 8081
-    sonarqube_http_port: 9000
-    taiga_http_port: 8082
   roles:
     - python_minimal
     - lxd
@@ -18,23 +13,3 @@
 - include: nexus.yml
 
 - include: sonarqube.yml
-
-    # - name: Publish Jenkins service OUTPUT host
-    #   become: yes
-    #   command: iptables -t nat -A PREROUTING -i eth1 -p tcp -m multiport --dports {{ jenkins_http_port }} -j DNAT --to-destination "{{ hostvars[groups.int_containers[0]].container_ip }}:{{ jenkins_http_port }}"
-
-    # - name: Publish Nexus service OUTPUT host
-    #   become: yes
-    #   command: iptables -t nat -A PREROUTING -i eth1 -p tcp -m multiport --dports {{ nexus_http_port }} -j DNAT --to-destination "{{ hostvars[groups.int_containers[1]].container_ip }}:{{ nexus_http_port }}"
-
-    # - name: Publish Sonarqube service OUTPUT host
-    #   become: yes
-    #   command: iptables -t nat -A PREROUTING -i eth1 -p tcp -m multiport --dports {{ sonarqube_http_port }} -j DNAT --to-destination "{{ hostvars[groups.int_containers[2]].container_ip }}:{{ sonarqube_http_port }}"
-
-    # - name: Publish Taiga service OUTPUT host
-    #   become: yes
-    #   command: iptables -t nat -A PREROUTING -i eth1 -p tcp -m multiport --dports {{ taiga_http_port }} -j DNAT --to-destination "{{ hostvars[groups.int_containers[1]].container_ip }}:{{ taiga_http_port }}"
-
-    # - name: Refresh iptables
-    #   include_role:
-    #     name: iptables-persistent
