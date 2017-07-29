@@ -15,7 +15,7 @@
   roles:
     - python_minimal
     - ansiblebit.oracle-java
-    - raguilera82.nexus3-oss
+    - raguilera82.nexus
   tasks:
     - name: Publish service PREROUTING
       become: yes
