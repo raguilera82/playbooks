@@ -12,7 +12,7 @@
     #- lxd_ipv4_address: 10.0.82.1
   roles:
     - python_minimal
-    - geerlingguy.jenkins
+    - raguilera82.jenkins
   # tasks:
   #   - name: Publish Jenkins service PREROUTING
   #     become: yes

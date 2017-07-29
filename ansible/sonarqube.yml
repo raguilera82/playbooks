@@ -9,6 +9,6 @@
     - sonar_version: '6.3'
   roles:
    - python_minimal
-   - kbrebanov.unzip
-   - geerlingguy.sonar
+   - raguilera82.unzip
+   - raguilera82.sonar
      
