@@ -1,0 +1,54 @@
+---
+
+- name: Create container
+  command: lxc init ubuntu:16.04 "{{ name_container }}"
+
+- name: Add container to {{ network_name }} network
+  command: "lxc network attach {{ network_name }} {{ name_container }} eth0"
+
+- name: Set static IP in container
+  command: "lxc config device set {{ name_container }} eth0 ipv4.address {{ ipv4_container }}"
+
+- name: Run container
+  command: "lxc start {{ name_container }} "
+
+- name: Create user in container for Ansible SSH
+  command: "lxc exec {{ name_container }} -- useradd -m {{ ssh_user }}"
+
+- name: Set user password in container for Ansible SSH
+  command: "lxc exec {{ name_container }} -- sh -c 'echo \"{{ ssh_user }}:{{ ssh_password }}\" | chpasswd'"
+
+- name: Set user groups in container for Ansible SSH
+  command: "lxc exec {{ name_container }} -- usermod -a -G lxd,sudo {{ ssh_user }}"
+
+- name: Set user shell in LXD containers for Ansible SSH
+  command: "lxc exec {{ name_container }} -- usermod -s /bin/bash {{ ssh_user }}"
+
+- name: Allow PasswordAuthentication in container for Ansible SSH
+  command: "lxc exec {{ name_container }} -- sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config"
+
+- name: Restart SSH service in container for Ansible SSH
+  command: "lxc exec {{ name_container }} -- service ssh restart"
+
+- name: Make initial snapshot
+  command: "lxc snapshot {{ name_container }} initial"
+
+- name: Setup SSH rules for container
+  become: yes
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: "{{ iptables_interface }}"
+    protocol: tcp
+    destination: "{{ groups.int[0] }}"
+    destination_port: "{{ ssh_port }}"
+    jump: DNAT
+    to_destination: "{{ ipv4_container }}:22"
+
+- name: Publish service container OUTPUT host
+  become: yes
+  command: iptables -t nat -A PREROUTING -i {{ iptables_interface }} -p tcp -m multiport --dports {{ host_http_port }} -j DNAT --to-destination "{{ ipv4_container }}:{{ container_http_port }}"
+
+- name: Refresh iptables
+  include_role:
+    name: iptables-persistent
