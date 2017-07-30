@@ -21,7 +21,7 @@
 
 - name: Setup NAT services
   become: yes
-  command: iptables -t nat -A PREROUTING -i eth1 -p tcp -m multiport --dports {{ hostvars[item].service_port }} -j DNAT --to-destination "{{ hostvars[item].container_ip }}:{{ hostvars[item].service_port }}"
+  command: iptables -t nat -A PREROUTING -i eth1 -p tcp -m multiport --dports {{ hostvars[item].host_service_port }} -j DNAT --to-destination "{{ hostvars[item].container_ip }}:{{ hostvars[item].service_port }}"
   with_items: "{{ groups.int_containers }}"
 
 - name: Refresh iptables
