@@ -1,0 +1,42 @@
+---
+
+- hosts: kanboard
+  gather_facts: false
+  become: yes
+  roles:
+    - python_minimal
+  tasks:
+    - name: Install necessary dependencies
+      apt:
+        name:
+          - unzip
+          - apache2
+          - libapache2-mod-php7.0
+          - php7.0-cli
+          - php7.0-mbstring
+          - php7.0-sqlite3
+          - php7.0-opcache
+          - php7.0-json
+          - php7.0-mysql
+          - php7.0-pgsql
+          - php7.0-ldap
+          - php7.0-gd
+        state: present
+    
+    - name: Download latest version
+      command: wget https://kanboard.net/kanboard-latest.zip
+    
+    - name: Move zip to /var/www/html
+      command: mv kanboard-latest.zip /var/www/html/
+    
+    - name: Unzip
+      command: unzip /var/www/html/kanboard-latest.zip -d /var/www/html/
+
+    - name: Change permissions
+      command: chown -R www-data:www-data /var/www/html/kanboard/data
+
+    - name: Remove zip
+      command: rm /var/www/html/kanboard-latest.zip
+
+    - name: Restart apache 2
+      command: service apache2 restart
